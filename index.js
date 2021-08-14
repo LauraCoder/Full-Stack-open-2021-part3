@@ -1,7 +1,20 @@
 const express = require('express')
 const app = express()
+const morgan = require('morgan')
 
 app.use(express.json())
+
+morgan.token('data', (req) => {
+    return req.method === 'POST'
+      ? JSON.stringify(req.body)
+      : null
+})
+
+app.use(
+    morgan(
+        ':method :url :status :res[content-length] - :response-time ms :data'
+    )
+)
 
 let persons = [
     {
@@ -34,24 +47,24 @@ app.get('/api/persons', (req, res) => {
     res.json(persons)
 })
   
-app.post('/api/persons', (request, response) => {
-    const body = request.body
+app.post('/api/persons', (req, res) => {
+    const body = req.body
     const personID = Math.floor(Math.random() * 1000)
   
     if (!body.name && !body.number) {
-      return response.status(400).json({ 
+      return res.status(400).json({ 
         error: 'name and number are missing' 
       })
     } else if (!body.name) {
-        return response.status(400).json({
+        return res.status(400).json({
             error: 'name is missing'
         })
     } else if (!body.number) {
-        return response.status(400).json({
+        return res.status(400).json({
             error: 'number is missing'
         })
     } else if (persons.some(person => person.name.toLowerCase() === body.name.toLowerCase())) {
-        return response.status(400).json({
+        return res.status(400).json({
             error: 'name must be unique'
         })
     }
@@ -64,17 +77,17 @@ app.post('/api/persons', (request, response) => {
   
     persons = persons.concat(person)
   
-    response.json(person)
+    res.json(person)
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
+app.get('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id)
     const person = persons.find(person => person.id === id)
     
     if (person) {
-        response.json(person)
+        res.json(person)
     } else {
-        response.status(404).end()
+        res.status(404).end()
     }
 })
 
