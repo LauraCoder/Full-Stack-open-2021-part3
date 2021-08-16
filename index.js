@@ -21,37 +21,6 @@ app.use(
     )
 )
 
-/*let persons = [
-    {
-        "name": "Arto Hellas",
-        "number": "040-123456",
-        "id": 1
-    },
-    {
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523",
-        "id": 2
-    },
-    {
-        "name": "Dan Abramov",
-        "number": "12-43-234345",
-        "id": 3
-    },
-    {
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122",
-        "id": 4
-    },
-]
-
-app.get('/', (req, res) => {
-    res.send('<h1>Hello World!</h1>')
-})
-  
-app.get('/api/persons', (req, res) => {
-    res.json(persons)
-})*/
-
 app.get('/api/persons', (req, res) => {
     Contact.find({}).then(contacts => {
       res.json(contacts)
@@ -89,29 +58,47 @@ app.post('/api/persons', (req, res) => {
     })
 })
 
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const person = persons.find(person => person.id === id)
-    
-    if (person) {
-        res.json(person)
-    } else {
-        res.status(404).end()
-    }
+app.get('/api/persons/:id', (request, response, next) => {
+    Contact.findById(request.params.id)
+      .then(contact => {
+        if (contact) {
+          response.json(contact)
+        } else {
+          response.status(404).end()
+        }
+      })
+      .catch(error => next(error))
 })
 
 app.get('/info', (req, res) => {
-    const amount = persons.length
     const date = new Date()
     
-    res.send(`<p>Phonebook has info for ${amount} people</p><p>${date}</p>`)
+    Contact.find({}).then(contacts => {
+        res.send(`<p>Phonebook has info for ${contacts.length} people</p><p>${date}</p>`)
+    })
 })
 
-app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    persons = persons.filter(person => person.id !== id)
+app.delete('/api/persons/:id', (req, res, next) => {
+    Contact.findByIdAndRemove(req.params.id)
+      .then(result => {
+        res.status(204).end()
+      })
+      .catch(error => next(error))
+})
 
-    res.status(204).end()
+app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
+  
+    const person = {
+      name: body.name,
+      number: body.number,
+    }
+  
+    Contact.findByIdAndUpdate(request.params.id, person, { new: true })
+      .then(updatedContact => {
+        response.json(updatedContact)
+      })
+      .catch(error => next(error))
 })
 
 const unknownEndpoint = (req, res) => {
@@ -119,6 +106,18 @@ const unknownEndpoint = (req, res) => {
 }
   
 app.use(unknownEndpoint)
+
+const errorHandler = (error, req, res, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return res.status(400).send({ error: 'malformatted id' })
+    }
+  
+    next(error)
+}
+  
+app.use(errorHandler)
 
 const PORT = process.env.PORT
     app.listen(PORT, () => {
