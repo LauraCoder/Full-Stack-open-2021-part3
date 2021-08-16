@@ -1,8 +1,11 @@
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
+const cors = require('cors')
 
 app.use(express.json())
+app.use(express.static('build'))
+app.use(cors())
 
 morgan.token('data', (req) => {
     return req.method === 'POST'
@@ -98,14 +101,20 @@ app.get('/info', (req, res) => {
     res.send(`<p>Phonebook has info for ${amount} people</p><p>${date}</p>`)
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    person = persons.filter(person => person.id !== id)
-  
-    response.status(204).end()
+app.delete('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id)
+    persons = persons.filter(person => person.id !== id)
+
+    res.status(204).end()
 })
 
-const PORT = 3001
+const unknownEndpoint = (req, res) => {
+    res.status(404).send({ error: 'unknown endpoint' })
+}
+  
+app.use(unknownEndpoint)
+
+const PORT = process.env.PORT || 3001
     app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
