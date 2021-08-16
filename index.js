@@ -2,10 +2,12 @@ const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
+require('dotenv').config()
+const Contact = require('./models/person')
 
-app.use(express.json())
 app.use(express.static('build'))
 app.use(cors())
+app.use(express.json())
 
 morgan.token('data', (req) => {
     return req.method === 'POST'
@@ -19,7 +21,7 @@ app.use(
     )
 )
 
-let persons = [
+/*let persons = [
     {
         "name": "Arto Hellas",
         "number": "040-123456",
@@ -48,12 +50,17 @@ app.get('/', (req, res) => {
   
 app.get('/api/persons', (req, res) => {
     res.json(persons)
+})*/
+
+app.get('/api/persons', (req, res) => {
+    Contact.find({}).then(contacts => {
+      res.json(contacts)
+    })
 })
   
 app.post('/api/persons', (req, res) => {
     const body = req.body
-    const personID = Math.floor(Math.random() * 1000)
-  
+
     if (!body.name && !body.number) {
       return res.status(400).json({ 
         error: 'name and number are missing' 
@@ -66,21 +73,20 @@ app.post('/api/persons', (req, res) => {
         return res.status(400).json({
             error: 'number is missing'
         })
-    } else if (persons.some(person => person.name.toLowerCase() === body.name.toLowerCase())) {
+    } /*else if (persons.some(person => person.name.toLowerCase() === body.name.toLowerCase())) {
         return res.status(400).json({
             error: 'name must be unique'
         })
-    }
+    }*/
   
-    const person = {
+    const contact = new Contact ({
       name: body.name,
       number: body.number,
-      id: personID,
-    }
+    })
   
-    persons = persons.concat(person)
-  
-    res.json(person)
+    contact.save().then(savedContact => {
+        res.json(savedContact)
+    })
 })
 
 app.get('/api/persons/:id', (req, res) => {
@@ -114,7 +120,7 @@ const unknownEndpoint = (req, res) => {
   
 app.use(unknownEndpoint)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
     app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
