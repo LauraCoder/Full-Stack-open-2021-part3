@@ -1,3 +1,5 @@
+//assignment 3.12.
+
 const mongoose = require('mongoose')
 
 if (process.argv.length < 3) {
@@ -25,19 +27,19 @@ const contact = new Contact({
 })
 
 if (process.argv[3] && process.argv[4]) {
-    contact.save().then(response => {
-        console.log(`added ${contact.name} ${contact.number} to phonebook`)
-        mongoose.connection.close()
-    })
+  contact.save().then(response => {
+    console.log(`added ${contact.name} ${contact.number} to phonebook`, response)
+    mongoose.connection.close()
+  })
 } else if (process.argv.length === 3 ) {
-    Contact.find({}).then(result => {
-        console.log('Phonebook:')
-        result.forEach(contact => {
-          console.log(`${contact.name} ${contact.number}`)
-        })
-        mongoose.connection.close()
+  Contact.find({}).then(result => {
+    console.log('Phonebook:')
+    result.forEach(contact => {
+      console.log(`${contact.name} ${contact.number}`)
     })
+    mongoose.connection.close()
+  })
 } else {
-    console.log('give name and number to contact')
-    process.exit(1)
+  console.log('give name and number to contact')
+  process.exit(1)
 }
